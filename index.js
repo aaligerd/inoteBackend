@@ -4,12 +4,11 @@ const app=express();
 
 mongoCon();
 
-app.get('/',(req,res)=>{
-    res.send("Hey buddy");
-});
-app.get('/gg',(req,res)=>{
-    res.send("Yeah u get gg \\|\\");
-});
+app.use(express.json());
+//Requried Routes
+app.use('/api/auth',require('./routes/auth'));
+app.use('/api/note',require('./routes/notes'));
+
 app.listen(2020,()=>{
     console.log("Running on http://localhost:2020");
 })

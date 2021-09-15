@@ -12,7 +12,7 @@ const { body, validationResult } = require('express-validator');
 router.post('/newnote', fetchToken, [
     //validation 
     body('title', 'enter a valid title').isLength({ min: 10 }),
-    body('description', 'enter a valid description').isLength({ min: 20 })],
+    body('description', 'enter a valid description with 20 length').isLength({ min: 20 })],
     async (req, res) => {
         //if error occure in validation
         const errors = validationResult(req);
@@ -53,6 +53,43 @@ router.post('/fetchnote', fetchToken, async (req, res) => {
         res.status(400).json({ error: "Internal Server Error" });
     }
 
+});
+
+
+//route for update existing note  PUT /api/note/update login requried
+router.put('/updatenote/:id', fetchToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { title, description, tag } = req.body;
+        let updateNotes = {};
+        if (title) { updateNotes.title = title };
+        if (description) { updateNotes.description = description };
+        if (tag) { updateNotes.tag = tag };
+        const noteFind = await Notes.findById(req.params.id);
+        if (!noteFind) { return res.status(404).send("Note Not Found"); }
+        if (noteFind.user.toString() !== userId) { return res.status(406).send("You are not allow to do that"); }
+        const saveNote = await Notes.findByIdAndUpdate(req.params.id, { $set: updateNotes }, { new: true });
+        res.send(saveNote);
+    } catch (error) {
+        console.log(error.message);
+        res.status(400).json({ error: "Internal Server Error" });
+    }
+});
+
+
+//route for delete existing note  delete /api/note/delete login requried
+router.delete('/delete/:id', fetchToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const noteFind = await Notes.findById(req.params.id);
+        if (!noteFind) { return res.status(404).send("Note Not Found"); }
+        if (noteFind.user.toString() !== userId) { return res.status(203).send("You are not allow to do that"); }
+        await Notes.findByIdAndDelete(req.params.id);
+        res.status(200).send("success");
+    } catch (error) {
+        console.log(error.message);
+        res.status(400).json({ error: "Internal Server Error" });
+    }
 });
 
 module.exports = router;
